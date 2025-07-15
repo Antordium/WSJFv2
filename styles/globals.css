@@ -1,0 +1,13 @@
+/* globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Apply base dark mode styles */
+body {
+  @apply bg-gray-100 text-gray-900;
+}
+
+body.dark {
+  @apply bg-darkBg text-darkText;
+}
