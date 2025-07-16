@@ -1,11 +1,11 @@
 {
   "root": true,
   "extends": [
-    "next/core-web-vitals", // Recommended Next.js ESLint configuration
-    "eslint:recommended",    // Basic recommended ESLint rules
-    "plugin:@typescript-eslint/recommended", // Recommended ESLint rules for TypeScript
-    "plugin:react/recommended", // Recommended ESLint rules for React
-    "plugin:react-hooks/recommended" // Recommended ESLint rules for React Hooks
+    "next/core-web-vitals",
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -21,30 +21,27 @@
     "react-hooks"
   ],
   "rules": {
-    // Suppress warnings about React being in scope, as it's automatically imported by Next.js/React 17+ JSX transform
     "react/react-in-jsx-scope": "off",
-    // Enforce valid defaultProps (optional, depends on preference)
     "react/require-default-props": "off",
-    // TypeScript specific rules
-    "@typescript-eslint/explicit-module-boundary-types": "off", // Disable requiring explicit return types for functions
-    "@typescript-eslint/no-explicit-any": "warn", // Warn on `any` usage, rather than error
-    // Other common rules
-    "indent": ["error", 2, { "SwitchCase": 1 }], // Enforce 2-space indentation, with 1-space for switch cases
-    "linebreak-style": ["error", "unix"],
-    "quotes": ["error", "single"],
-    "semi": ["error", "always"],
-    "no-unused-vars": "warn", // Warn on unused variables
-    "comma-dangle": ["error", "always-multiline"], // Enforce trailing commas for multiline
-    "object-curly-spacing": ["error", "always"], // Enforce spaces inside object curly braces
-    "array-bracket-spacing": ["error", "never"], // Enforce no spaces inside array brackets
-    "no-trailing-spaces": "error", // Disallow trailing whitespace at the end of lines
-    "space-in-parens": ["error", "never"], // Enforce no spaces inside parentheses
-    "arrow-spacing": "error", // Enforce consistent spacing before and after the arrow in arrow functions
-    "keyword-spacing": "error" // Enforce consistent spacing before and after keywords
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "no-unused-vars": "off",
+    "indent": "off",
+    "linebreak-style": "off",
+    "quotes": "off",
+    "semi": "off",
+    "comma-dangle": "off",
+    "object-curly-spacing": "off",
+    "array-bracket-spacing": "off",
+    "no-trailing-spaces": "off",
+    "space-in-parens": "off",
+    "arrow-spacing": "off",
+    "keyword-spacing": "off"
   },
   "settings": {
     "react": {
-      "version": "detect" // Automatically detect the React version
+      "version": "detect"
     }
   }
 }
