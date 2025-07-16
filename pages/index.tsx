@@ -2,6 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
+// --- Type Declarations for PDF Libraries ---
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => void;
+  }
+}
+
 // --- Interfaces and Calculation Utilities ---
 export interface CoDScores {
   uvTri: number; // User Value / Training Readiness Impact
@@ -82,10 +89,10 @@ const WeightsConfiguration: React.FC<WeightsConfigurationProps> = ({ weights, se
   };
 
   const weightFields = [
-    { label: "User Value / Training Readiness Impact (UV/TRI) Weight", name: "wUvTri", value: weights.wUvTri },
-    { label: "Time Criticality / Event Dependency (TC/ED) Weight", name: "wTcEd", value: weights.wTcEd },
-    { label: "Risk Reduction / Opportunity Enablement (RR/OE) Weight", name: "wRrOe", value: weights.wRrOe },
-    { label: "Compliance / Regulatory / SLA (CR/SLA) Weight", name: "wCrSla", value: weights.wCrSla },
+    { label: 'User Value / Training Readiness Impact (UV/TRI) Weight', name: 'wUvTri', value: weights.wUvTri },
+    { label: 'Time Criticality / Event Dependency (TC/ED) Weight', name: 'wTcEd', value: weights.wTcEd },
+    { label: 'Risk Reduction / Opportunity Enablement (RR/OE) Weight', name: 'wRrOe', value: weights.wRrOe },
+    { label: 'Compliance / Regulatory / SLA (CR/SLA) Weight', name: 'wCrSla', value: weights.wCrSla },
   ];
 
   return (
@@ -148,10 +155,10 @@ const InitiativeInputForm: React.FC<InitiativeInputFormProps> = ({ onAdd }) => {
   };
 
   const scoreFields = [
-    { label: "User Value / Training Readiness Impact (1-10)", value: uvTri, setter: setUvTri },
-    { label: "Time Criticality / Event Dependency (1-10)", value: tcEd, setter: setTcEd },
-    { label: "Risk Reduction / Opportunity Enablement (1-10)", value: rrOe, setter: setRrOe },
-    { label: "Compliance / Regulatory / SLA (1-10)", value: crSla, setter: setCrSla },
+    { label: 'User Value / Training Readiness Impact (1-10)', value: uvTri, setter: setUvTri },
+    { label: 'Time Criticality / Event Dependency (1-10)', value: tcEd, setter: setTcEd },
+    { label: 'Risk Reduction / Opportunity Enablement (1-10)', value: rrOe, setter: setRrOe },
+    { label: 'Compliance / Regulatory / SLA (1-10)', value: crSla, setter: setCrSla },
   ];
 
   return (
@@ -358,10 +365,10 @@ const Home: React.FC = () => {
         throw new Error('PDF export is only available in the browser');
       }
 
-      // Dynamic imports to avoid SSR issues - using proper syntax for jsPDF
+      // Dynamic imports to avoid SSR issues
       const { jsPDF } = await import('jspdf');
       
-      // Import and initialize autoTable - this extends jsPDF prototype
+      // Import autoTable - this extends jsPDF prototype
       await import('jspdf-autotable');
       
       const doc = new jsPDF();
@@ -396,8 +403,8 @@ const Home: React.FC = () => {
         init.calculatedWsjf?.toFixed(2) || '0'
       ]);
       
-      // Add table using autoTable - now properly extending the jsPDF instance
-      (doc as any).autoTable({
+      // Add table using autoTable - extended method
+      doc.autoTable({
         head: [['Rank', 'Initiative', 'UV/TRI', 'TC/ED', 'RR/OE', 'CR/SLA', 'Job Size', 'CoD', 'WSJF']],
         body: tableData,
         startY: 70,
