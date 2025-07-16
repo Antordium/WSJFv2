@@ -1,6 +1,5 @@
 // pages/index.tsx
 import React, { useRef, useState, useEffect } from 'react';
-import html2pdf from 'html2pdf.js';
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs for initiatives
 
 // --- Interfaces and Calculation Utilities (normally in utils/calculator.ts) ---
@@ -326,6 +325,7 @@ const defaultWeights: CoDWeights = {
 const Home: React.FC = () => {
   const [weights, setWeights] = useState<CoDWeights>(defaultWeights);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
   const pdfContentRef = useRef<HTMLDivElement>(null);
 
   // Effect to re-calculate WSJF when weights or initiatives change
@@ -352,8 +352,15 @@ const Home: React.FC = () => {
     setInitiatives(prev => prev.filter(init => init.id !== id));
   };
 
-  const handleExportPdf = () => {
-    if (pdfContentRef.current) {
+  const handleExportPdf = async () => {
+    if (!pdfContentRef.current) return;
+
+    setIsExporting(true);
+    
+    try {
+      // Dynamic import to avoid SSR issues
+      const html2pdf = (await import('html2pdf.js')).default;
+      
       const element = pdfContentRef.current;
       const options = {
         margin: 0.5,
@@ -365,7 +372,6 @@ const Home: React.FC = () => {
 
       // Create a temporary div for PDF content to add header and weights
       const pdfWrapper = document.createElement('div');
-      // Apply some basic styles for the PDF header that html2pdf can interpret
       pdfWrapper.style.fontFamily = 'sans-serif';
       pdfWrapper.style.padding = '20px';
 
@@ -381,7 +387,12 @@ const Home: React.FC = () => {
         ${element.innerHTML}
       `;
 
-      html2pdf().set(options).from(pdfWrapper).save();
+      await html2pdf().set(options).from(pdfWrapper).save();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -410,18 +421,7 @@ const Home: React.FC = () => {
         </div>
         <button
           onClick={handleExportPdf}
-          className="mt-6 px-8 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-darkBg"
+          disabled={isExporting || initiatives.length === 0}
+          className="mt-6 px-8 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-darkBg disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Export to PDF Report
-        </button>
-      </section>
-
-      <footer className="text-center text-gray-500 dark:text-gray-400 text-sm mt-10">
-        <p>&copy; {new Date().getFullYear()} WSJF Calculator. All rights reserved.</p>
-        <p>Prioritize to minimize service member time and maximize impact.</p>
-      </footer>
-    </div>
-  );
-};
-
-export default Home;
+          {isExporting ? 'Generating PDF...' : 'Export to PDF Report'}
