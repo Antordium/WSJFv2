@@ -9,7 +9,8 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Head>
         <title>WSJF Calculator</title>
         <meta name="description" content="Weighted Shortest Job First Calculator for Military Software Development" />
-        {/* The favicon.ico reference has been removed from here */}
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
       <Component {...pageProps} />
     </>
