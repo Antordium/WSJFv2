@@ -353,10 +353,16 @@ const Home: React.FC = () => {
     setIsExporting(true);
     
     try {
-      // Dynamic import to avoid SSR issues
-      const jsPDF = (await import('jspdf')).jsPDF;
-      // Import autoTable function directly
-      const autoTable = (await import('jspdf-autotable')).default;
+      // Check if we're in the browser environment
+      if (typeof window === 'undefined') {
+        throw new Error('PDF export is only available in the browser');
+      }
+
+      // Dynamic imports to avoid SSR issues - using proper syntax for jsPDF
+      const { jsPDF } = await import('jspdf');
+      
+      // Import and initialize autoTable - this extends jsPDF prototype
+      await import('jspdf-autotable');
       
       const doc = new jsPDF();
       
@@ -390,8 +396,8 @@ const Home: React.FC = () => {
         init.calculatedWsjf?.toFixed(2) || '0'
       ]);
       
-      // Add table using autoTable
-      autoTable(doc, {
+      // Add table using autoTable - now properly extending the jsPDF instance
+      (doc as any).autoTable({
         head: [['Rank', 'Initiative', 'UV/TRI', 'TC/ED', 'RR/OE', 'CR/SLA', 'Job Size', 'CoD', 'WSJF']],
         body: tableData,
         startY: 70,
@@ -422,9 +428,22 @@ const Home: React.FC = () => {
       
       // Save the PDF
       doc.save(`wsjf_prioritization_report_${new Date().toISOString().split('T')[0]}.pdf`);
+      
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      
+      // Provide more specific error messaging
+      if (error instanceof Error) {
+        if (error.message.includes('browser')) {
+          alert('PDF export is only available when running in the browser.');
+        } else if (error.message.includes('import')) {
+          alert('Failed to load PDF libraries. Please try refreshing the page.');
+        } else {
+          alert(`Failed to generate PDF: ${error.message}`);
+        }
+      } else {
+        alert('Failed to generate PDF. Please try again.');
+      }
     } finally {
       setIsExporting(false);
     }
