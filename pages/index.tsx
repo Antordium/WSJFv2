@@ -354,8 +354,9 @@ const Home: React.FC = () => {
     
     try {
       // Dynamic import to avoid SSR issues
-      const { jsPDF } = await import('jspdf');
-      const { default: autoTable } = await import('jspdf-autotable');
+      const jsPDF = (await import('jspdf')).jsPDF;
+      // Import autoTable function directly
+      const autoTable = (await import('jspdf-autotable')).default;
       
       const doc = new jsPDF();
       
