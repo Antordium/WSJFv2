@@ -3,10 +3,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  experimental: {
-    forceSwcTransforms: true,
-  },
-  // Ensure PDF libraries work properly
+  // Ensure PDF libraries work properly in serverless environment
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -14,6 +11,7 @@ const nextConfig = {
         fs: false,
         net: false,
         tls: false,
+        crypto: false,
       };
     }
     return config;
