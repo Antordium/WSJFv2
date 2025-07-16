@@ -5,20 +5,11 @@ const config: Config = {
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}", // Keep this if App Router was chosen, otherwise can remove
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  darkMode: "class", // Enable dark mode by toggling a 'dark' class on the html element
+  darkMode: "class",
   theme: {
-    extend: {
-      // Define your custom dark mode colors if needed, e.g.:
-      colors: {
-        darkBg: "#121212",
-        darkCard: "#1E1E1E",
-        darkText: "#E0E0E0",
-        darkAccent: "#BB86FC", // A sample accent color for dark mode
-        // Add more dark mode specific colors here
-      },
-    },
+    extend: {},
   },
   plugins: [],
 };
