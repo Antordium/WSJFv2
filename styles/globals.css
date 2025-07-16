@@ -3,11 +3,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Apply base dark mode styles */
+/* Apply base styles */
 body {
-  @apply bg-gray-100 text-gray-900;
+  @apply bg-gray-100 text-gray-900 transition-colors duration-200;
 }
 
 body.dark {
-  @apply bg-darkBg text-darkText;
+  @apply bg-gray-900 text-gray-100;
 }
