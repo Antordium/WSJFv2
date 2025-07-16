@@ -1,5 +1,5 @@
 // pages/index.tsx
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 // --- Interfaces and Calculation Utilities ---
@@ -317,6 +317,8 @@ const Home: React.FC = () => {
 
   // Effect to re-calculate WSJF when weights or initiatives change
   useEffect(() => {
+    if (initiatives.length === 0) return;
+    
     const updatedInitiatives = initiatives.map(init => {
       const calculatedCoD = calculateCoD(init, weights);
       const calculatedWsjf = calculateWsjf(calculatedCoD, init.jobSize);
@@ -324,13 +326,18 @@ const Home: React.FC = () => {
     });
     const sortedInitiatives = updatedInitiatives.sort((a, b) => (b.calculatedWsjf || 0) - (a.calculatedWsjf || 0));
     setInitiatives(sortedInitiatives);
-  }, [weights, initiatives.length]);
+  }, [weights]);
 
   const handleAddInitiative = (newInitiative: Omit<Initiative, 'id' | 'calculatedCoD' | 'calculatedWsjf'>) => {
     const id = uuidv4();
     const calculatedCoD = calculateCoD(newInitiative, weights);
     const calculatedWsjf = calculateWsjf(calculatedCoD, newInitiative.jobSize);
-    setInitiatives(prev => [...prev, { ...newInitiative, id, calculatedCoD, calculatedWsjf }]);
+    const newInitWithCalcs = { ...newInitiative, id, calculatedCoD, calculatedWsjf };
+    
+    setInitiatives(prev => {
+      const updated = [...prev, newInitWithCalcs];
+      return updated.sort((a, b) => (b.calculatedWsjf || 0) - (a.calculatedWsjf || 0));
+    });
   };
 
   const handleDeleteInitiative = (id: string) => {
@@ -346,8 +353,9 @@ const Home: React.FC = () => {
     setIsExporting(true);
     
     try {
+      // Dynamic import to avoid SSR issues
       const { jsPDF } = await import('jspdf');
-      const autoTable = (await import('jspdf-autotable')).default;
+      const { default: autoTable } = await import('jspdf-autotable');
       
       const doc = new jsPDF();
       
@@ -355,17 +363,22 @@ const Home: React.FC = () => {
       doc.setFontSize(20);
       doc.text('WSJF Prioritization Report', 14, 22);
       
+      // Add timestamp
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+      
       // Add weights section
       doc.setFontSize(12);
-      doc.text('Configured Weights:', 14, 35);
+      doc.text('Configured Weights:', 14, 40);
       doc.setFontSize(10);
-      doc.text(`User Value / Training Readiness Impact (UV/TRI): ${weights.wUvTri}`, 14, 42);
-      doc.text(`Time Criticality / Event Dependency (TC/ED): ${weights.wTcEd}`, 14, 47);
-      doc.text(`Risk Reduction / Opportunity Enablement (RR/OE): ${weights.wRrOe}`, 14, 52);
-      doc.text(`Compliance / Regulatory / SLA (CR/SLA): ${weights.wCrSla}`, 14, 57);
+      doc.text(`User Value / Training Readiness Impact (UV/TRI): ${weights.wUvTri}`, 14, 47);
+      doc.text(`Time Criticality / Event Dependency (TC/ED): ${weights.wTcEd}`, 14, 52);
+      doc.text(`Risk Reduction / Opportunity Enablement (RR/OE): ${weights.wRrOe}`, 14, 57);
+      doc.text(`Compliance / Regulatory / SLA (CR/SLA): ${weights.wCrSla}`, 14, 62);
       
       // Prepare table data
-      const tableData = initiatives.map(init => [
+      const tableData = initiatives.map((init, index) => [
+        (index + 1).toString(),
         init.name,
         init.uvTri.toString(),
         init.tcEd.toString(),
@@ -376,18 +389,38 @@ const Home: React.FC = () => {
         init.calculatedWsjf?.toFixed(2) || '0'
       ]);
       
-      // Add table
+      // Add table using autoTable
       autoTable(doc, {
-        head: [['Initiative', 'UV/TRI', 'TC/ED', 'RR/OE', 'CR/SLA', 'Job Size', 'CoD', 'WSJF']],
+        head: [['Rank', 'Initiative', 'UV/TRI', 'TC/ED', 'RR/OE', 'CR/SLA', 'Job Size', 'CoD', 'WSJF']],
         body: tableData,
-        startY: 65,
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [41, 128, 185] },
-        alternateRowStyles: { fillColor: [245, 245, 245] }
+        startY: 70,
+        styles: { 
+          fontSize: 8,
+          cellPadding: 2
+        },
+        headStyles: { 
+          fillColor: [41, 128, 185],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: { 
+          fillColor: [245, 245, 245] 
+        },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 15 },
+          1: { cellWidth: 40 },
+          2: { halign: 'center', cellWidth: 15 },
+          3: { halign: 'center', cellWidth: 15 },
+          4: { halign: 'center', cellWidth: 15 },
+          5: { halign: 'center', cellWidth: 15 },
+          6: { halign: 'center', cellWidth: 20 },
+          7: { halign: 'center', cellWidth: 20 },
+          8: { halign: 'center', cellWidth: 20 }
+        }
       });
       
       // Save the PDF
-      doc.save('wsjf_prioritization_report.pdf');
+      doc.save(`wsjf_prioritization_report_${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -419,4 +452,19 @@ const Home: React.FC = () => {
           <button
             onClick={handleExportPdf}
             disabled={isExporting || initiatives.length === 0}
-            className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opac
+            className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isExporting ? 'Generating PDF...' : 'Export to PDF'}
+          </button>
+        </div>
+        <InitiativesTable initiatives={initiatives} onDelete={handleDeleteInitiative} />
+      </section>
+
+      <footer className="text-center text-gray-500 dark:text-gray-400 text-sm">
+        <p>WSJF Calculator - Prioritize initiatives using Weighted Shortest Job First methodology</p>
+      </footer>
+    </div>
+  );
+};
+
+export default Home;
