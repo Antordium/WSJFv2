@@ -2,13 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-// --- Type Declarations for PDF Libraries ---
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => void;
-  }
-}
-
 // --- Interfaces and Calculation Utilities ---
 export interface CoDScores {
   uvTri: number; // User Value / Training Readiness Impact
@@ -365,12 +358,14 @@ const Home: React.FC = () => {
         throw new Error('PDF export is only available in the browser');
       }
 
-      // Dynamic imports to avoid SSR issues
-      const { jsPDF } = await import('jspdf');
+      // Dynamic imports to avoid SSR issues - using proper typing
+      const jsPDFModule = await import('jspdf');
+      const jsPDF = jsPDFModule.jsPDF || jsPDFModule.default;
       
-      // Import autoTable - this extends jsPDF prototype
-      await import('jspdf-autotable');
+      // Import autoTable plugin
+      const autoTableModule = await import('jspdf-autotable');
       
+      // Create new PDF instance
       const doc = new jsPDF();
       
       // Add title
@@ -403,35 +398,53 @@ const Home: React.FC = () => {
         init.calculatedWsjf?.toFixed(2) || '0'
       ]);
       
-      // Add table using autoTable - extended method
-      doc.autoTable({
-        head: [['Rank', 'Initiative', 'UV/TRI', 'TC/ED', 'RR/OE', 'CR/SLA', 'Job Size', 'CoD', 'WSJF']],
-        body: tableData,
-        startY: 70,
-        styles: { 
-          fontSize: 8,
-          cellPadding: 2
-        },
-        headStyles: { 
-          fillColor: [41, 128, 185],
-          textColor: 255,
-          fontStyle: 'bold'
-        },
-        alternateRowStyles: { 
-          fillColor: [245, 245, 245] 
-        },
-        columnStyles: {
-          0: { halign: 'center', cellWidth: 15 },
-          1: { cellWidth: 40 },
-          2: { halign: 'center', cellWidth: 15 },
-          3: { halign: 'center', cellWidth: 15 },
-          4: { halign: 'center', cellWidth: 15 },
-          5: { halign: 'center', cellWidth: 15 },
-          6: { halign: 'center', cellWidth: 20 },
-          7: { halign: 'center', cellWidth: 20 },
-          8: { halign: 'center', cellWidth: 20 }
-        }
-      });
+      // Add table using autoTable - check if method exists
+      if (typeof (doc as any).autoTable === 'function') {
+        (doc as any).autoTable({
+          head: [['Rank', 'Initiative', 'UV/TRI', 'TC/ED', 'RR/OE', 'CR/SLA', 'Job Size', 'CoD', 'WSJF']],
+          body: tableData,
+          startY: 70,
+          styles: { 
+            fontSize: 8,
+            cellPadding: 2
+          },
+          headStyles: { 
+            fillColor: [41, 128, 185],
+            textColor: 255,
+            fontStyle: 'bold'
+          },
+          alternateRowStyles: { 
+            fillColor: [245, 245, 245] 
+          },
+          columnStyles: {
+            0: { halign: 'center', cellWidth: 15 },
+            1: { cellWidth: 40 },
+            2: { halign: 'center', cellWidth: 15 },
+            3: { halign: 'center', cellWidth: 15 },
+            4: { halign: 'center', cellWidth: 15 },
+            5: { halign: 'center', cellWidth: 15 },
+            6: { halign: 'center', cellWidth: 20 },
+            7: { halign: 'center', cellWidth: 20 },
+            8: { halign: 'center', cellWidth: 20 }
+          }
+        });
+      } else {
+        // Fallback: add table data as text if autoTable fails
+        let yPosition = 70;
+        doc.setFontSize(8);
+        doc.text('Rank | Initiative | UV/TRI | TC/ED | RR/OE | CR/SLA | Job Size | CoD | WSJF', 14, yPosition);
+        yPosition += 5;
+        
+        tableData.forEach((row) => {
+          const rowText = row.join(' | ');
+          doc.text(rowText, 14, yPosition);
+          yPosition += 4;
+          if (yPosition > 280) { // Add new page if needed
+            doc.addPage();
+            yPosition = 20;
+          }
+        });
+      }
       
       // Save the PDF
       doc.save(`wsjf_prioritization_report_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -443,13 +456,13 @@ const Home: React.FC = () => {
       if (error instanceof Error) {
         if (error.message.includes('browser')) {
           alert('PDF export is only available when running in the browser.');
-        } else if (error.message.includes('import')) {
+        } else if (error.message.includes('import') || error.message.includes('module')) {
           alert('Failed to load PDF libraries. Please try refreshing the page.');
         } else {
           alert(`Failed to generate PDF: ${error.message}`);
         }
       } else {
-        alert('Failed to generate PDF. Please try again.');
+        alert('Failed to generate PDF. Please try again or check the browser console for details.');
       }
     } finally {
       setIsExporting(false);
