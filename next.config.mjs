@@ -12,9 +12,30 @@ const nextConfig = {
         net: false,
         tls: false,
         crypto: false,
+        stream: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
       };
     }
+    
+    // Handle jsPDF specific modules
+    config.module.rules.push({
+      test: /\.m?js$/,
+      resolve: {
+        fullySpecified: false,
+      },
+    });
+
     return config;
+  },
+  // Disable static optimization for PDF functionality
+  experimental: {
+    esmExternals: false,
   },
 };
 
