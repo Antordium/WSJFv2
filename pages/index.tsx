@@ -1,8 +1,8 @@
 // pages/index.tsx
 import React, { useRef, useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs for initiatives
+import { v4 as uuidv4 } from 'uuid';
 
-// --- Interfaces and Calculation Utilities (normally in utils/calculator.ts) ---
+// --- Interfaces and Calculation Utilities ---
 export interface CoDScores {
   uvTri: number; // User Value / Training Readiness Impact
   tcEd: number;  // Time Criticality / Event Dependency
@@ -18,9 +18,9 @@ export interface CoDWeights {
 }
 
 export interface Initiative extends CoDScores {
-  id: string; // Unique ID for keying in React lists
+  id: string;
   name: string;
-  jobSize: number; // Story Points
+  jobSize: number;
   calculatedCoD?: number;
   calculatedWsjf?: number;
 }
@@ -32,31 +32,27 @@ export const calculateCoD = (scores: CoDScores, weights: CoDWeights): number => 
 };
 
 export const calculateWsjf = (CoD: number, jobSize: number): number => {
-  // Prevent division by zero or negative job size, which would be illogical
   return jobSize > 0 ? CoD / jobSize : 0;
 };
-// --- End of Interfaces and Calculation Utilities ---
 
-
-// --- DarkModeToggle Component (normally in components/DarkModeToggle.tsx) ---
+// --- DarkModeToggle Component ---
 const DarkModeToggle: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    // On component mount, check user's system preference or local storage (if any was set)
-    // For this session-cleared app, we'll default to system preference initially
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialMode = prefersDark; // No persistence, so just default to system
-    setIsDarkMode(initialMode);
-    document.documentElement.classList.toggle('dark', initialMode);
+    if (typeof window !== 'undefined') {
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setIsDarkMode(prefersDark);
+      document.documentElement.classList.toggle('dark', prefersDark);
+    }
   }, []);
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
-    document.documentElement.classList.toggle('dark', newMode);
-    // You could save this to localStorage if you wanted preference persistence during the session
-    // localStorage.setItem('theme', newMode ? 'dark' : 'light');
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', newMode);
+    }
   };
 
   return (
@@ -69,10 +65,8 @@ const DarkModeToggle: React.FC = () => {
     </button>
   );
 };
-// --- End of DarkModeToggle Component ---
 
-
-// --- WeightsConfiguration Component (normally in components/WeightsConfiguration.tsx) ---
+// --- WeightsConfiguration Component ---
 interface WeightsConfigurationProps {
   weights: CoDWeights;
   setWeights: React.Dispatch<React.SetStateAction<CoDWeights>>;
@@ -83,7 +77,7 @@ const WeightsConfiguration: React.FC<WeightsConfigurationProps> = ({ weights, se
     const { name, value } = e.target;
     setWeights(prev => ({
       ...prev,
-      [name]: parseFloat(value),
+      [name]: parseFloat(value) || 0,
     }));
   };
 
@@ -98,7 +92,7 @@ const WeightsConfiguration: React.FC<WeightsConfigurationProps> = ({ weights, se
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {weightFields.map((field) => (
         <div key={field.name} className="flex flex-col">
-          <label htmlFor={field.name} className="text-sm font-medium mb-1 dark:text-gray-300">
+          <label htmlFor={field.name} className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
             {field.label}:
           </label>
           <input
@@ -116,10 +110,8 @@ const WeightsConfiguration: React.FC<WeightsConfigurationProps> = ({ weights, se
     </div>
   );
 };
-// --- End of WeightsConfiguration Component ---
 
-
-// --- InitiativeInputForm Component (normally in components/InitiativeInputForm.tsx) ---
+// --- InitiativeInputForm Component ---
 interface InitiativeInputFormProps {
   onAdd: (initiative: Omit<CoDScores & { name: string; jobSize: number }, 'calculatedCoD' | 'calculatedWsjf'>) => void;
 }
@@ -165,7 +157,7 @@ const InitiativeInputForm: React.FC<InitiativeInputFormProps> = ({ onAdd }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="initiativeName" className="block text-sm font-medium mb-1 dark:text-gray-300">
+        <label htmlFor="initiativeName" className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
           Initiative Name/Description:
         </label>
         <input
@@ -181,7 +173,7 @@ const InitiativeInputForm: React.FC<InitiativeInputFormProps> = ({ onAdd }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {scoreFields.map((field) => (
           <div key={field.label}>
-            <label htmlFor={field.label.replace(/\s/g, '')} className="block text-sm font-medium mb-1 dark:text-gray-300">
+            <label htmlFor={field.label.replace(/\s/g, '')} className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
               {field.label}: {field.value}
             </label>
             <input
@@ -191,24 +183,24 @@ const InitiativeInputForm: React.FC<InitiativeInputFormProps> = ({ onAdd }) => {
               max="10"
               value={field.value}
               onChange={(e) => field.setter(parseInt(e.target.value))}
-              className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-200 dark:bg-gray-600 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-blue-500 [&::-moz-range-thumb]:appearance-none"
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-200 dark:bg-gray-600"
             />
           </div>
         ))}
       </div>
 
       <div>
-        <label htmlFor="jobSize" className="block text-sm font-medium mb-1 dark:text-gray-300">
+        <label htmlFor="jobSize" className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
           Job Size (Story Points): {jobSize}
         </label>
         <input
           type="range"
           id="jobSize"
           min="1"
-          max="20" // Assuming a max story point of 20 for typical Agile teams
+          max="20"
           value={jobSize}
           onChange={(e) => setJobSize(parseInt(e.target.value))}
-          className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-200 dark:bg-gray-600 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-blue-500 [&::-moz-range-thumb]:appearance-none"
+          className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-200 dark:bg-gray-600"
         />
       </div>
 
@@ -221,10 +213,8 @@ const InitiativeInputForm: React.FC<InitiativeInputFormProps> = ({ onAdd }) => {
     </form>
   );
 };
-// --- End of InitiativeInputForm Component ---
 
-
-// --- InitiativesTable Component (normally in components/InitiativesTable.tsx) ---
+// --- InitiativesTable Component ---
 interface InitiativesTableProps {
   initiatives: Initiative[];
   onDelete: (id: string) => void;
@@ -311,8 +301,6 @@ const InitiativesTable: React.FC<InitiativesTableProps> = ({ initiatives, onDele
     </div>
   );
 };
-// --- End of InitiativesTable Component ---
-
 
 // --- Main Home Component ---
 const defaultWeights: CoDWeights = {
@@ -326,20 +314,17 @@ const Home: React.FC = () => {
   const [weights, setWeights] = useState<CoDWeights>(defaultWeights);
   const [initiatives, setInitiatives] = useState<Initiative[]>([]);
   const [isExporting, setIsExporting] = useState(false);
-  const pdfContentRef = useRef<HTMLDivElement>(null);
 
   // Effect to re-calculate WSJF when weights or initiatives change
   useEffect(() => {
-    // Recalculate CoD and WSJF for all initiatives
     const updatedInitiatives = initiatives.map(init => {
       const calculatedCoD = calculateCoD(init, weights);
       const calculatedWsjf = calculateWsjf(calculatedCoD, init.jobSize);
       return { ...init, calculatedCoD, calculatedWsjf };
     });
-    // Sort by WSJF in descending order (highest priority first)
     const sortedInitiatives = updatedInitiatives.sort((a, b) => (b.calculatedWsjf || 0) - (a.calculatedWsjf || 0));
     setInitiatives(sortedInitiatives);
-  }, [weights, initiatives.length]); // Dependencies: re-run if weights change or initiative count changes
+  }, [weights, initiatives.length]);
 
   const handleAddInitiative = (newInitiative: Omit<Initiative, 'id' | 'calculatedCoD' | 'calculatedWsjf'>) => {
     const id = uuidv4();
@@ -353,41 +338,56 @@ const Home: React.FC = () => {
   };
 
   const handleExportPdf = async () => {
-    if (!pdfContentRef.current) return;
+    if (initiatives.length === 0) {
+      alert('No initiatives to export. Please add some initiatives first.');
+      return;
+    }
 
     setIsExporting(true);
     
     try {
-      // Dynamic import to avoid SSR issues
-      const html2pdf = (await import('html2pdf.js')).default;
+      const { jsPDF } = await import('jspdf');
+      const autoTable = (await import('jspdf-autotable')).default;
       
-      const element = pdfContentRef.current;
-      const options = {
-        margin: 0.5,
-        filename: 'wsjf_prioritization_report.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-
-      // Create a temporary div for PDF content to add header and weights
-      const pdfWrapper = document.createElement('div');
-      pdfWrapper.style.fontFamily = 'sans-serif';
-      pdfWrapper.style.padding = '20px';
-
-      pdfWrapper.innerHTML = `
-        <h1 style="text-align: center; margin-bottom: 20px; font-size: 24px; font-weight: bold; color: #333;">Weighted Shortest Job First (WSJF) Prioritization Report</h1>
-        <div style="margin-bottom: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
-          <h2 style="font-size: 18px; margin-bottom: 10px; color: #555;">Configured Weights:</h2>
-          <p style="margin-bottom: 5px; color: #666;">User Value / Training Readiness Impact (UV/TRI) Weight: <strong style="color: #333;">${weights.wUvTri}</strong></p>
-          <p style="margin-bottom: 5px; color: #666;">Time Criticality / Event Dependency (TC/ED) Weight: <strong style="color: #333;">${weights.wTcEd}</strong></p>
-          <p style="margin-bottom: 5px; color: #666;">Risk Reduction / Opportunity Enablement (RR/OE) Weight: <strong style="color: #333;">${weights.wRrOe}</strong></p>
-          <p style="margin-bottom: 5px; color: #666;">Compliance / Regulatory / SLA (CR/SLA) Weight: <strong style="color: #333;">${weights.wCrSla}</strong></p>
-        </div>
-        ${element.innerHTML}
-      `;
-
-      await html2pdf().set(options).from(pdfWrapper).save();
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(20);
+      doc.text('WSJF Prioritization Report', 14, 22);
+      
+      // Add weights section
+      doc.setFontSize(12);
+      doc.text('Configured Weights:', 14, 35);
+      doc.setFontSize(10);
+      doc.text(`User Value / Training Readiness Impact (UV/TRI): ${weights.wUvTri}`, 14, 42);
+      doc.text(`Time Criticality / Event Dependency (TC/ED): ${weights.wTcEd}`, 14, 47);
+      doc.text(`Risk Reduction / Opportunity Enablement (RR/OE): ${weights.wRrOe}`, 14, 52);
+      doc.text(`Compliance / Regulatory / SLA (CR/SLA): ${weights.wCrSla}`, 14, 57);
+      
+      // Prepare table data
+      const tableData = initiatives.map(init => [
+        init.name,
+        init.uvTri.toString(),
+        init.tcEd.toString(),
+        init.rrOe.toString(),
+        init.crSla.toString(),
+        init.jobSize.toString(),
+        init.calculatedCoD?.toFixed(2) || '0',
+        init.calculatedWsjf?.toFixed(2) || '0'
+      ]);
+      
+      // Add table
+      autoTable(doc, {
+        head: [['Initiative', 'UV/TRI', 'TC/ED', 'RR/OE', 'CR/SLA', 'Job Size', 'CoD', 'WSJF']],
+        body: tableData,
+        startY: 65,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [41, 128, 185] },
+        alternateRowStyles: { fillColor: [245, 245, 245] }
+      });
+      
+      // Save the PDF
+      doc.save('wsjf_prioritization_report.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -397,31 +397,26 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen p-8 transition-colors duration-200 bg-gray-100 dark:bg-darkBg text-gray-900 dark:text-darkText">
+    <div className="min-h-screen p-8 transition-colors duration-200 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <header className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
         <h1 className="text-4xl font-extrabold text-blue-700 dark:text-blue-400">WSJF Calculator</h1>
         <DarkModeToggle />
       </header>
 
-      <section className="mb-8 p-6 rounded-lg shadow-xl bg-white dark:bg-darkCard">
+      <section className="mb-8 p-6 rounded-lg shadow-xl bg-white dark:bg-gray-800">
         <h2 className="text-2xl font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">Define Cost of Delay Weights</h2>
         <WeightsConfiguration weights={weights} setWeights={setWeights} />
       </section>
 
-      <section className="mb-8 p-6 rounded-lg shadow-xl bg-white dark:bg-darkCard">
+      <section className="mb-8 p-6 rounded-lg shadow-xl bg-white dark:bg-gray-800">
         <h2 className="text-2xl font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">Add New Initiative</h2>
         <InitiativeInputForm onAdd={handleAddInitiative} />
       </section>
 
-      <section className="mb-8 p-6 rounded-lg shadow-xl bg-white dark:bg-darkCard">
-        <h2 className="text-2xl font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">Prioritized Initiatives</h2>
-        {/* This div will be captured for the PDF export */}
-        <div ref={pdfContentRef}>
-          <InitiativesTable initiatives={initiatives} onDelete={handleDeleteInitiative} />
-        </div>
-        <button
-          onClick={handleExportPdf}
-          disabled={isExporting || initiatives.length === 0}
-          className="mt-6 px-8 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-darkBg disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isExporting ? 'Generating PDF...' : 'Export to PDF Report'}
+      <section className="mb-8 p-6 rounded-lg shadow-xl bg-white dark:bg-gray-800">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-semibold border-b pb-2 border-gray-200 dark:border-gray-700">Prioritized Initiatives</h2>
+          <button
+            onClick={handleExportPdf}
+            disabled={isExporting || initiatives.length === 0}
+            className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opac
